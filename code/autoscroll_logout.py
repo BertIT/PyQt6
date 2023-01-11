@@ -5,38 +5,38 @@ from PyQt6 import QtCore
 from PyQt6.QtGui import QColor
 
 
+RED = QColor(255, 0, 0)
+GREEN = QColor(0, 255, 0)
+BLUE = QColor(0, 0, 255)
+BLACK = QColor(0, 0, 0)
+
+
 class Function(QtCore.QObject):
     log_signal = QtCore.pyqtSignal(str)
-    color_signal = QtCore.pyqtSignal(str)
+    color_signal = QtCore.pyqtSignal(QColor)
     finished = QtCore.pyqtSignal()
 
     def __init__(self):
         super().__init__()
         self.log_text = ''
 
-    def print_text(self, string: str, color: str = 'black') -> None:
+    def print_text(self, string: str, color: QColor = BLACK) -> None:
         self.color_signal.emit(color)
         self.log_signal.emit(string)
 
     def run_function(self) -> None:
-        self.print_text('Program started', 'green')
+        self.print_text('Program started', GREEN)
         time.sleep(1)
-        self.print_text('do something ...', 'red')
+        self.print_text('do something ...', RED)
         time.sleep(3)
         for i in range(20):
-            self.print_text(f'... task {i}', 'blue')
+            self.print_text(f'... task {i}', BLUE)
             time.sleep(0.1)
-        self.print_text('Program finished', 'green')
+        self.print_text('Program finished', GREEN)
         self.finished.emit()
 
 
 class MainWindow(qtw.QWidget):
-    colors = {
-        'black': QColor(0, 0, 0),
-        'green': QColor(0, 255, 0),
-        'red': QColor(255, 0, 0),
-        'blue': QColor(0, 0, 255),
-    }
 
     def __init__(self):
         super().__init__()
@@ -63,6 +63,8 @@ class MainWindow(qtw.QWidget):
         self.show()
 
     def run_start_button(self) -> None:
+
+        self.start_button.setDisabled(True)
         self.func_thread = QtCore.QThread(self)
         self.func = Function()
 
@@ -71,6 +73,7 @@ class MainWindow(qtw.QWidget):
         self.func_thread.started.connect(self.func.run_function)
         self.func.finished.connect(self.func_thread.quit)
         self.func.finished.connect(self.func.deleteLater)
+        self.func.finished.connect(self.set_start_button_enabled)
         self.func_thread.finished.connect(self.func_thread.deleteLater)
         self.func.color_signal.connect(self.set_log_color)
         self.func.log_signal.connect(self.set_log_text)
@@ -78,8 +81,11 @@ class MainWindow(qtw.QWidget):
 
         self.func_thread.start()
 
-    def set_log_color(self, color: str) -> None:
-        self.log_out.setTextColor(self.colors[color])
+    def set_start_button_enabled(self):
+        self.start_button.setEnabled(True)
+
+    def set_log_color(self, color: QColor) -> None:
+        self.log_out.setTextColor(color)
 
     def set_log_text(self, log_text: str) -> None:
         self.log_out.append(log_text)
