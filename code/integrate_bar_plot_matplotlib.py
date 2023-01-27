@@ -160,6 +160,7 @@ class MainWindow(qtw.QWidget):
         print(df)
         print(type(df))
         self.df_2_plot = df
+        self.sc.axes.cla()
         self.plot_df()
         self.sc.draw()
 
